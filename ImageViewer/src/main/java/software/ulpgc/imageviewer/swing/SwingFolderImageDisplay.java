@@ -166,16 +166,12 @@ public class SwingFolderImageDisplay extends JPanel implements ImageDisplay {
     }
 
     private boolean isImageEmpty() {
-        if (imagePaths.isEmpty()) {
-            return true;
-        }
-        return false;
+        return imagePaths.isEmpty();
     }
 
     private int getNormalizedOffset(int panelWidth) {
         int totalImageWidth = panelWidth * imagePaths.size();
-        int normalizedOffset = (currentOffset % totalImageWidth + totalImageWidth) % totalImageWidth;
-        return normalizedOffset;
+        return (currentOffset % totalImageWidth + totalImageWidth) % totalImageWidth;
     }
 
 
@@ -217,15 +213,6 @@ public class SwingFolderImageDisplay extends JPanel implements ImageDisplay {
 
     }
 
-    public int getCurrentOffset() {
-        return currentOffset;
-    }
-
-    public void updateOffset(int newOffset) {
-        currentOffset += newOffset;
-        repaint();
-    }
-
     @Override
     public void on(Dragged dragged) {
         this.dragged = dragged != null ? dragged : Dragged.Null;
@@ -242,9 +229,6 @@ public class SwingFolderImageDisplay extends JPanel implements ImageDisplay {
         repaint();
     }
 
-    public int getImageCount() {
-        return imagePaths.size();
-    }
 
     private record PaintOrder(String image, int offset) {
     }
