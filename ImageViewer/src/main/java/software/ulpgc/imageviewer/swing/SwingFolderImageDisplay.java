@@ -35,27 +35,33 @@ public class SwingFolderImageDisplay extends JPanel implements ImageDisplay {
         addChooseFolderButton(); // Always add the choose folder button
 
     }
+
     private void addChooseFolderButton() {
         JButton selectFolderButton = new JButton("Select Folder");
         selectFolderButton.addActionListener(e -> chooseFolder());
         this.add(selectFolderButton);
     }
+
     public void initializeWithFolderPath(String folderPath) {
         loader = new FolderImageLoader(folderPath);
         imagePaths = loader.getImages();
-        if (!imagePaths.isEmpty()) {
-            setFocusOnImage(0); // Display the first image
-        }
+        focusOnImage();
         repaint();
     }
+
     private void loadImagePaths(String folderPath) {
         loader = new FolderImageLoader(folderPath);
         imagePaths = loader.getImages();
+        focusOnImage();
+        repaint();
+    }
+
+    private void focusOnImage() {
         if (!imagePaths.isEmpty()) {
             setFocusOnImage(0);
         }
-        repaint();
     }
+
     private MouseMotionListener mouseMotionListener() {
         return new MouseMotionListener() {
             public void mouseDragged(MouseEvent e) {
@@ -87,11 +93,7 @@ public class SwingFolderImageDisplay extends JPanel implements ImageDisplay {
                 int imageCount = imagePaths.size();
                 int totalImageWidth = panelWidth * imageCount;
 
-                // Normalize the current offset
-                currentOffset %= totalImageWidth;
-                if (currentOffset > 0) {
-                    currentOffset -= totalImageWidth;
-                }
+                normalizeCurrentOffset(totalImageWidth);
 
                 // Calculate the most visible image index
                 int mostVisibleImageIndex = -currentOffset / panelWidth;
@@ -103,6 +105,13 @@ public class SwingFolderImageDisplay extends JPanel implements ImageDisplay {
 
                 mostVisibleImageIndex = (mostVisibleImageIndex + imageCount) % imageCount;
                 setFocusOnImage(mostVisibleImageIndex);
+            }
+
+            private void normalizeCurrentOffset(int totalImageWidth) {
+                currentOffset %= totalImageWidth;
+                if (currentOffset > 0) {
+                    currentOffset -= totalImageWidth;
+                }
             }
 
 
@@ -118,6 +127,10 @@ public class SwingFolderImageDisplay extends JPanel implements ImageDisplay {
         JFileChooser chooser = new JFileChooser();
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         int returnVal = chooser.showOpenDialog(this);
+        loadImagePaths(returnVal, chooser);
+    }
+
+    private void loadImagePaths(int returnVal, JFileChooser chooser) {
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             String folderPath = chooser.getSelectedFile().getAbsolutePath();
             loadImagePaths(folderPath);
@@ -127,21 +140,21 @@ public class SwingFolderImageDisplay extends JPanel implements ImageDisplay {
 
     public void paint(Graphics g) {
         super.paint(g);
-        if (imagePaths.isEmpty()) {
-            return;
-        }
+        if (isImageEmpty()) return;
 
         Graphics2D g2d = (Graphics2D) g;
         int panelWidth = getWidth();
 
-        // Calculate the normalized offset to keep it within the total width of all images
-        int totalImageWidth = panelWidth * imagePaths.size();
-        int normalizedOffset = (currentOffset % totalImageWidth + totalImageWidth) % totalImageWidth;
+        int normalizedOffset = getNormalizedOffset(panelWidth);
 
         // Determine the starting and ending points for drawing images
         int startIdx = -(normalizedOffset / panelWidth) - 1; // Extra -1 to cover partial images at the start
         int endIdx = startIdx + (getWidth() / panelWidth) + 2; // +2 to cover partial images at the end
 
+        drawImage(startIdx, endIdx, panelWidth, normalizedOffset, g2d);
+    }
+
+    private void drawImage(int startIdx, int endIdx, int panelWidth, int normalizedOffset, Graphics2D g2d) {
         for (int i = startIdx; i <= endIdx; i++) {
             int idx = Math.floorMod(i, imagePaths.size());
             BufferedImage image = loadImage(imagePaths.get(idx));
@@ -150,6 +163,19 @@ public class SwingFolderImageDisplay extends JPanel implements ImageDisplay {
                 g2d.drawImage(image, xPosition, 0, panelWidth, getHeight(), this);
             }
         }
+    }
+
+    private boolean isImageEmpty() {
+        if (imagePaths.isEmpty()) {
+            return true;
+        }
+        return false;
+    }
+
+    private int getNormalizedOffset(int panelWidth) {
+        int totalImageWidth = panelWidth * imagePaths.size();
+        int normalizedOffset = (currentOffset % totalImageWidth + totalImageWidth) % totalImageWidth;
+        return normalizedOffset;
     }
 
 

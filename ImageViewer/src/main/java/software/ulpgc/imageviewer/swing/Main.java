@@ -2,7 +2,6 @@ package software.ulpgc.imageviewer.swing;
 
 import software.ulpgc.imageviewer.FolderImageLoader;
 import software.ulpgc.imageviewer.Image;
-import software.ulpgc.imageviewer.ImageDisplay;
 import software.ulpgc.imageviewer.ImagePresenter;
 
 import javax.swing.*;
